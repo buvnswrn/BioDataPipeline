@@ -19,16 +19,16 @@ class ETLPipeline:
 
 
 class SourceToLandingPipeline(ETLPipeline):
-    def run(self, file_paths: list) -> bool:
+    def run(self, table_names: list) -> bool:
         """
         Run the ETL pipeline for source to landing (Bronze Layer)
-        :param file_paths: the file paths to extract the data
+        :param table_names: the table names to load the data
         :return: True if the data is loaded successfully else False
         """
-        for file_path, extractor in zip(file_paths, self.extractors):
+        for table_name, extractor in zip(table_names, self.extractors):
             data = extractor.extract()
             for loader in self.loaders:
-                if not loader.load(data):
+                if not loader.load(data, table_name):
                     return False
         return True
 
