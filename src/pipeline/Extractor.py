@@ -10,6 +10,7 @@ class Extractor:
     """
     Base Extractor class to be inherited by the child classes
     """
+
     def __init__(self, config: dict):
         self.config = config
 
@@ -26,6 +27,7 @@ class NPASSExtractor(Extractor):
     """
     Extractor class to extract data from NPASS dataset
     """
+
     def __init__(self, path):
         super().__init__({"path": path})
 
@@ -69,6 +71,7 @@ class ChEMBLExtractor(Extractor):
     """
     Extractor class to extract data from ChEMBL dataset
     """
+
     def __init__(self, path):
         self.conn = sqlite3.connect(path)
         super().__init__({"path": path})
@@ -81,3 +84,20 @@ class ChEMBLExtractor(Extractor):
         :return: extracted data from the dataset as a pandas DataFrame
         """
         return pd.read_sql(table_name, self.conn)
+
+
+class ParquetExtractor(Extractor):
+    """
+    Extractor class to extract data from Parquet file
+    """
+
+    def __init__(self, path):
+        super().__init__({"path": path})
+
+    @logger
+    def extract(self) -> pd.DataFrame:
+        """
+        Extract method to extract data from Parquet file
+        :return: extracted data from the file as a pandas DataFrame
+        """
+        return pd.read_parquet(self.config["path"])
