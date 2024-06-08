@@ -1,8 +1,15 @@
+from src.decorator.LoggerDecoratorFactory import LoggerDecoratorFactory
+
+bronze_logger = LoggerDecoratorFactory("Source2Landing (Bronze Layer)").log_time
+silver_logger = LoggerDecoratorFactory("Landing2Curated (Silver Layer)").log_time
+gold_logger = LoggerDecoratorFactory("Curated2Consumable (Gold Layer)").log_time
+
 
 class ETLPipeline:
     """
     Base class for ETL pipeline
     """
+
     def __init__(self, extractors, transformers, loaders):
         """
         Constructor for ETLPipeline
@@ -19,6 +26,7 @@ class ETLPipeline:
 
 
 class SourceToLandingPipeline(ETLPipeline):
+    @bronze_logger
     def run(self, table_names: list) -> bool:
         """
         Run the ETL pipeline for source to landing (Bronze Layer)
@@ -34,6 +42,7 @@ class SourceToLandingPipeline(ETLPipeline):
 
 
 class LandingToCuratedPipeline(ETLPipeline):
+    @silver_logger
     def run(self, file_paths: list):
         """
         Run the ETL pipeline for landing to curated (Silver Layer)
@@ -49,6 +58,7 @@ class LandingToCuratedPipeline(ETLPipeline):
 
 
 class CuratedToConsumablePipeline(ETLPipeline):
+    @gold_logger
     def run(self, file_paths: list):
         """
         Run the ETL pipeline for curated to consumable (Gold Layer)

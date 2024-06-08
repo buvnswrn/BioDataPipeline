@@ -13,9 +13,10 @@ class LoggerDecoratorFactory:
         LoggerDecoratorFactory.type = type
 
     @classmethod
-    def log_time(cls, func):
+    def log_time(cls, func, name=None):
         """
         Decorator to log the time taken by the function
+        :param name: the name of the table
         :param func: the function to decorate
         :return: the decorated function
         """
@@ -25,7 +26,7 @@ class LoggerDecoratorFactory:
             start_time = time.time()
             result = func(*args, **kwargs)
             end_time = time.time()
-            logging.info(f"{cls.type}: Time taken by {func.__qualname__}: {end_time - start_time} seconds")
+            logging.info(f"{cls.type}: Time taken by {func.__qualname__}: {end_time - start_time} seconds" + (f" - {name}" if name else ""))
             return result
 
         return wrapper
