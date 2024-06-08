@@ -35,6 +35,8 @@ class SourceToLandingPipeline(ETLPipeline):
         """
         for table_name, extractor in zip(table_names, self.extractors):
             data = extractor.extract()
+            for transformer in self.transformers:
+                data = transformer.transform(data)
             for loader in self.loaders:
                 if not loader.load(data, table_name):
                     return False
