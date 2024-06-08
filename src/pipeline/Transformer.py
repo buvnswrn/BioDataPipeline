@@ -1,3 +1,4 @@
+import numpy as np
 import pandas as pd
 
 from src.decorator.LoggerDecoratorFactory import LoggerDecoratorFactory
@@ -23,7 +24,10 @@ class Transformer:
         :param data: the data to transform
         :return: transformed data as a pandas DataFrame
         """
-        return self.schema.parse_df(data)
+        data = data.replace('n.a.', np.nan)
+        for column in data.columns:
+            data[column] = data[column].astype(self.schema[column]())
+        return data
 
 
 class BasicTransformer(Transformer):
@@ -39,8 +43,7 @@ class BasicTransformer(Transformer):
         :param data: the data to transform
         :return: transformed data as a pandas DataFrame
         """
-        data = super().transform(data)
-        data.dropna(inplace=True)
+        # data.dropna(inplace=True)
         data.drop_duplicates(inplace=True)
         return data
 
