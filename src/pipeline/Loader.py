@@ -1,4 +1,6 @@
 import sqlite3
+from graphdatascience import GraphDataScience
+from neo4j import GraphDatabase
 
 import pandas as pd
 
@@ -62,4 +64,53 @@ class ParquetLoader(Loader):
         :return: True if the data is loaded successfully else False
         """
         data.to_parquet(self.path + file_name + ".parquet")
+        return True
+
+
+def create_nodes(tx, node_label, properties):
+    node_properties = ", ".join([f"{key}: ${key}" for key in properties.keys()])
+    query = f"MERGE (n: {node_label} {{{node_properties}}})"
+    tx.run(query, **properties)
+
+
+class Neo4jLoader(Loader):
+    """
+    Loader class to load data to Neo4j database
+    """
+    create_graph_query = """
+    CREATE (n:{label} {props})
+    """
+
+    def __init__(self, uri, user, password):
+        super().__init__()
+        self.uri = uri
+        self.user = user
+        self.password = password
+        self.gds = GraphDataScience(self.uri, (self.user, self.password))
+        self.driver = GraphDatabase.driver(self.uri, auth=(self.user, self.password))
+
+    @logger
+    def load(self, data: pd.DataFrame, graph_name: str) -> bool:
+        """
+        Load method to load data to the Neo4j database
+        :param graph_name: the graph name to load the data
+        :param data: the dataframe to load
+        :return: True if the data is loaded successfully else False
+        """
+        test = pd.DataFrame({
+            "nodeId": [1, 2, 3],
+            "target": ["Test2", "Test8", "Test9"],
+            "weight": [10, 20, 30]
+        })
+        nodes = pd.DataFrame().assign(
+            nodeId=test['nodeId'].replace('NPT', '', regex=True).astype(int),
+            labels='Target',
+            subject=test['nodeId'].replace('NPT', '', regex=True).astype(int),
+            features=test.drop(columns=['nodeId']).apply(list, axis=1)
+        )
+        df = data.fillna('').astype(str)
+        with self.driver.session() as session:
+            for index, row in df.iterrows():
+                properties = row.to_dict()
+                session.write_transaction(create_nodes, 'Target', properties)
         return True
