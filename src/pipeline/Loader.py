@@ -2,7 +2,7 @@ import sqlite3
 from graphdatascience import GraphDataScience
 from neo4j import GraphDatabase
 
-import pandas as pd
+from pyspark.pandas import DataFrame
 
 from src.decorator.LoggerDecoratorFactory import LoggerDecoratorFactory
 
@@ -35,7 +35,7 @@ class SQLiteLoader(Loader):
         self.conn = sqlite3.connect(path)
 
     @logger
-    def load(self, data: pd.DataFrame, table_name: str) -> bool:
+    def load(self, data: DataFrame, table_name: str) -> bool:
         """
         Load method to load data to the SQLite database
         :param table_name: the table name to load the data
@@ -56,7 +56,7 @@ class ParquetLoader(Loader):
         self.path = path
 
     @logger
-    def load(self, data: pd.DataFrame, file_name: str) -> bool:
+    def load(self, data: DataFrame, file_name: str) -> bool:
         """
         Load method to load data to the Parquet file
         :param file_name: the file name to load the data
@@ -90,19 +90,19 @@ class Neo4jLoader(Loader):
         self.driver = GraphDatabase.driver(self.uri, auth=(self.user, self.password))
 
     @logger
-    def load(self, data: pd.DataFrame, graph_name: str) -> bool:
+    def load(self, data: DataFrame, graph_name: str) -> bool:
         """
         Load method to load data to the Neo4j database
         :param graph_name: the graph name to load the data
         :param data: the dataframe to load
         :return: True if the data is loaded successfully else False
         """
-        test = pd.DataFrame({
+        test = DataFrame({
             "nodeId": [1, 2, 3],
             "target": ["Test2", "Test8", "Test9"],
             "weight": [10, 20, 30]
         })
-        nodes = pd.DataFrame().assign(
+        nodes = DataFrame().assign(
             nodeId=test['nodeId'].replace('NPT', '', regex=True).astype(int),
             labels='Target',
             subject=test['nodeId'].replace('NPT', '', regex=True).astype(int),

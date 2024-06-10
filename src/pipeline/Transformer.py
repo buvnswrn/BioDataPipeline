@@ -1,5 +1,5 @@
 import numpy as np
-import pandas as pd
+from pyspark.pandas import DataFrame
 
 from src.decorator.LoggerDecoratorFactory import LoggerDecoratorFactory
 
@@ -18,7 +18,7 @@ class Transformer:
         """
         self.schema = schema
 
-    def transform(self, data: pd.DataFrame) -> pd.DataFrame:
+    def transform(self, data: DataFrame) -> DataFrame:
         """
         Transform method to be implemented by the child class
         :param data: the data to transform
@@ -35,7 +35,7 @@ class BasicTransformer(Transformer):
         super().__init__(schema)
 
     @logger
-    def transform(self, data: pd.DataFrame) -> pd.DataFrame:
+    def transform(self, data: DataFrame) -> DataFrame:
         """
         Transform method to transform the data.
         It drops the rows with missing values and duplicates.
@@ -57,7 +57,7 @@ class NPASSTransformer(BasicTransformer):
         super().__init__(schema)
 
     @logger
-    def transform(self, data: pd.DataFrame) -> pd.DataFrame:
+    def transform(self, data: DataFrame) -> DataFrame:
         """
         Transform method to transform the data.
         It drops the rows with missing values and duplicates.
@@ -81,7 +81,7 @@ class Neo4jTransformer(BasicTransformer):
         super().__init__(schema)
 
     @logger
-    def transform(self, data: pd.DataFrame) -> pd.DataFrame:
+    def transform(self, data: DataFrame) -> DataFrame:
         """
         Transform method to transform the data.
         It drops the rows with missing values and duplicates.
@@ -97,7 +97,7 @@ class Neo4jTransformer(BasicTransformer):
                 data['nodeId'] += data[col]
         else:
             data['nodeId'] = data[id_col]
-        data = pd.DataFrame().assign(
+        data = DataFrame().assign(
             nodeId=data['nodeId'],
             labels=self.node_label,
             subject=data['nodeId'].replace('NPT', '', regex=True).astype(int),

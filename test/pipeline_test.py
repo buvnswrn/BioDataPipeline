@@ -3,6 +3,7 @@ import time
 
 import pandas as pd
 from dotenv import load_dotenv
+from pyspark.sql import SparkSession
 
 load_dotenv()
 
@@ -24,32 +25,32 @@ npass = {
 }
 
 
-def test_source_to_landing_pipeline():
+def test_source_to_landing_pipeline(spark: SparkSession):
     for key, value in npass.items():
         path, schema = value
         source_to_landing_pipeline = SourceToLandingPipeline(
-            extractors=[NPASSExtractor(path)],
+            extractors=[NPASSExtractor(path, spark)],
             transformers=[Transformer(schema)],
             loaders=[ParquetLoader("../data/temp/bronze/landing_npass_")]
         )
         assert source_to_landing_pipeline.run([key]) is True
 
 
-def test_landing_to_curated_pipeline():
+def test_landing_to_curated_pipeline(spark: SparkSession):
     for key, value in npass.items():
         path, schema = value
         landing_to_curated_pipeline = SourceToLandingPipeline(
-            extractors=[ParquetExtractor("../data/temp/bronze/landing_npass_" + key + ".parquet")],
+            extractors=[ParquetExtractor("../data/temp/bronze/landing_npass_" + key + ".parquet", spark)],
             transformers=[BasicTransformer(schema)],
             loaders=[ParquetLoader("../data/temp/silver/curated_npass_")]
         )
         assert landing_to_curated_pipeline.run([key]) is True
 
 
-def test_curated_to_consumable_pipeline():
+def test_curated_to_consumable_pipeline(spark:SparkSession):
     key = "targetInfo"
     landing_to_curated_pipeline = SourceToLandingPipeline(
-        extractors=[ParquetExtractor("../data/temp/silver/curated_npass_" + key + ".parquet")],
+        extractors=[ParquetExtractor("../data/temp/silver/curated_npass_" + key + ".parquet", spark)],
         transformers=[Neo4jTransformer('target_id', 'target')],
         loaders=[Neo4jLoader(os.environ.get("NEO4J_URI"),
                              os.environ.get("NEO4J_USER"), os.environ.get("NEO4J_PASS"))]
@@ -58,14 +59,15 @@ def test_curated_to_consumable_pipeline():
 
 
 if __name__ == '__main__':
+    spark_engine = SparkSession.builder.appName("BioDataPipeline").getOrCreate()
     start = time.time()
-    test_source_to_landing_pipeline()
+    test_source_to_landing_pipeline(spark_engine)
     end = time.time()
     print(f"Execution time: {end - start}")
-    test_landing_to_curated_pipeline()
-    end2 = time.time()
-    print(f"Execution time: {end2 - end}")
-    test_curated_to_consumable_pipeline()
-    end3 = time.time()
-    print(f"Execution time: {end3 - end2}")
-    print("Total Execution time: ", end3 - start)
+    # test_landing_to_curated_pipeline(spark_engine)
+    # end2 = time.time()
+    # print(f"Execution time: {end2 - end}")
+    # test_curated_to_consumable_pipeline(spark_engine)
+    # end3 = time.time()
+    # print(f"Execution time: {end3 - end2}")
+    # print("Total Execution time: ", end3 - start)
